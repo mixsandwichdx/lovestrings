@@ -16,7 +16,6 @@
     margin: 0;
     padding: 20px;
     box-sizing: border-box;
-    overflow: auto;
   }
   .window {
     border: 4px solid #fff;
@@ -26,14 +25,14 @@
     max-width: 550px;
     background-color: #000;
     box-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
-    max-height: 90vh; /* 画面に収まる場合はスクロールしない */
-    overflow-y: auto; /* 中身が溢れた時だけ縦スクロール */
+    box-sizing: border-box;
   }
   .text-box {
     min-height: 90px;
     margin-bottom: 20px;
-    line-height: 1.6;
+    line-height: 1.5;
     font-size: 16px;
+    white-space: pre-wrap;
   }
   .options {
     display: flex;
@@ -57,21 +56,41 @@
   .result-title {
     font-size: 18px;
     font-weight: bold;
-    color: #ffeb3b;
-    margin-bottom: 15px;
+    color: #fff;
+    margin-bottom: 5px;
   }
   .reason-box {
     background: #111;
     border: 1px dashed #aaa;
-    padding: 12px;
-    margin: 10px 0;
+    padding: 10px 12px;
+    margin: 8px 0;
     font-size: 14px;
-    line-height: 1.5;
+    line-height: 1.4;
+    color: #fff;
+  }
+  /* 見出しと本文の余白を詰める設定 */
+  .reason-item {
+    font-weight: bold;
+    color: #ffeb3b;
+    margin-top: 6px;
+    margin-bottom: 0;
+  }
+  .reason-item:first-child {
+    margin-top: 0;
+  }
+  .reason-text {
+    margin-top: 2px;
+    margin-bottom: 6px;
+    padding-left: 8px;
+    white-space: pre-wrap;
+  }
+  .reason-text:last-child {
+    margin-bottom: 0;
   }
   /* 画像配置用のスタイリング */
   .result-img-container {
     text-align: center;
-    margin: 15px 0;
+    margin: 10px 0;
   }
   .result-img {
     max-width: 100%;
@@ -84,14 +103,45 @@
   .img-caption {
     font-size: 11px;
     color: #aaa;
-    margin-top: 6px;
+    margin-top: 4px;
+  }
+
+  /* 脈動アニメーションの定義 */
+  @keyframes pulse {
+    0% {
+      transform: scale(1);
+    }
+    50% {
+      transform: scale(1.08);
+      box-shadow: 0 0 15px rgba(255, 0, 127, 0.6);
+    }
+    100% {
+      transform: scale(1);
+    }
+  }
+
+  /* 【ヴィオラ（Viola）】専用グラデーション＆脈動スタイル */
+  .perfect-viola-title {
+    background: linear-gradient(45deg, #ff007f, #7f00ff);
+    color: #fff;
+    padding: 6px 12px;
+    font-size: 20px;
+    font-weight: bold;
+    border-radius: 4px;
+    display: inline-block;
+    animation: pulse 1.8s infinite ease-in-out;
+  }
+
+  /* 完全選択時の締めテキストピンク色指定 */
+  .perfect-viola-text {
+    color: #ff69b4;
   }
 </style>
 </head>
 <body>
 
 <div class="window">
-  <div id="text-box" class="text-box">よくぞ まいられた！ 勇者よ！<br>これより 3つの 質問で おまえに もっとも ふさわしい 弦楽器を 診断してやろう！</div>
+  <div id="text-box" class="text-box">「運命の弦楽器診断」へようこそ！<br>３つの質問に答えて、あなたにぴったりの弦楽器を見つけてみましょう。</div>
   <div id="options" class="options">
     <!-- ボタンが動的に入ります -->
   </div>
@@ -124,28 +174,28 @@ function playBeepSound() {
 // 質問データ
 const quizData = [
   {
-    question: "【第1問】舞台の上での あなたが 心惹かれる アプローチは？",
+    question: "【第１問】舞台の上での あなたが 心惹かれる アプローチは？",
     answers: [
-      { text: "1. スポットライトを浴びて、物語の先頭を駆け抜ける", id: "q1_1" },
-      { text: "2. 大地のように深く静かに、土台となって空間を満たす", id: "q1_2" },
-      { text: "3. 表と裏の世界を鮮やかにつなぎ、全体の響きに豊かな陰影をつくる", id: "q1_3" }
+      { text: "１. スポットライトを浴びて、物語の先頭を駆け抜ける", id: "q1_1" },
+      { text: "２. 大地のように深く静かに、土台となって空間を満たす", id: "q1_2" },
+      { text: "３. 表と裏の世界を鮮やかにつなぎ、全体の響きに豊かな陰影をつくる", id: "q1_3" }
     ]
   },
   {
-    question: "【第2問】音楽で 風景を描くなら、どれが  しっくりくる？",
+    question: "【第２問】音楽で 風景を描くなら、どれが しっくりくる？",
     answers: [
-      { text: "1. 突き抜けるような、高く澄み渡った青空", id: "q2_1" },
-      { text: "2. 深海や大樹の根のように、じっくりと広がる重厚な精神世界", id: "q2_2" },
-      { text: "3. 夕暮れ時の温かみと哀愁を秘めた、居心地のよい絶妙な狭間の世界", id: "q2_3" }
+      { text: "１. 突き抜けるような、高く澄み渡った青空", id: "q2_1" },
+      { text: "２. 深海や大樹の根のように、じっくりと広がる重厚な精神世界", id: "q2_2" },
+      { text: "３. 夕暮れ時の温かみと哀愁を秘めた、居心地のよい絶妙な狭間の世界", id: "q2_3" }
     ]
   },
   {
-    question: "【第3問】あなたが 音楽や 楽器に 求めるものは？",
+    question: "【第３問】あなたが 音楽や 楽器に 求めるものは？",
     answers: [
-      { text: "1. 圧倒的な華やかさと高音のスピード感", id: "q3_1" },
-      { text: "2. 豊かな響きと胸を打つ哀愁・情熱", id: "q3_2" },
-      { text: "3. 重厚で深い低音の振動と包容力", id: "q3_3" },
-      { text: "4. 派手さはなくても絶対に欠かせない渋い存在感", id: "q3_4" }
+      { text: "１. 圧倒的な華やかさと高音のスピード感", id: "q3_1" },
+      { text: "２. 豊かな響きと胸を打つ哀愁・情熱", id: "q3_2" },
+      { text: "３. 重厚で深い低音の振動と包容力", id: "q3_3" },
+      { text: "４. 派手さはなくても絶対に欠かせない渋い存在感", id: "q3_4" }
     ]
   }
 ];
@@ -153,7 +203,7 @@ const quizData = [
 // こじつけ理由
 const reasons = {
   q1_1: "【アプローチ】\n物語の先頭を駆け抜けたいあなた：主旋律を歌い上げるのに最もふさわしい楽器こそがヴィオラです。人の声に最も近い温かく深い音色で主旋律を伸びやかに奏で、時に合奏全体を包み込みながら主役を張る表現力は、あなたの求める役割に完璧に合致しています。",
-  q1_2: "【アプローチ】\n土台となって空間を満たしたいあなた：ヴィオラの最低音（C線）が持つ深みのある響きこそ、アンサンブルの土台を根底から支える鍵となります。全体のバランスを察知するあなたの感性に最適です。",
+  q1_2: "【アプローチ】\n土台となって空間を満たしたいあなた：ヴィオラの最低音（Ｃ線）が持つ深みのある響きこそ、アンサンブルの土台を根底から支える鍵となります。全体のバランスを察知するあなたの感性に最適です。",
   q1_3: "【アプローチ】\n豊かな陰影をつくりたいあなた：ハーモニーの隙間を埋め、旋律と伴奏を結ぶ美学を理解しているあなたは、まさに天性のヴィオラ適性を持っています。",
 
   q2_1: "【風景】\n高く澄み渡った空間を思い描くあなた：ヴィオラは高音域で見せる表情豊かな旋律美も持ち合わせています。澄み切った高音ソロも美しく歌い上げられる表現力は、あなたのセンスそのものです。",
@@ -204,25 +254,33 @@ function showResult() {
   const reason2 = reasons[userChoices[1]];
   const reason3 = reasons[userChoices[2]];
 
-  // ★ご自身の画像ファイル名を指定（index.htmlと同じフォルダに配置）
+  function formatReason(rawText) {
+    const parts = rawText.split('\n');
+    const title = parts[0];
+    const body = parts.slice(1).join('\n');
+    return `<div class="reason-item">・${title}</div><div class="reason-text">${body}</div>`;
+  }
+
+  // 完全なヴィオラ選択肢（第１問:３, 第２問:３, 第３問:４）の判定
+  const isPerfectViola = (userChoices[0] === "q1_3" && userChoices[1] === "q2_3" && userChoices[2] === "q3_4");
+
   const imageUrl = "my_viola.jpg"; 
 
-  textBox.innerHTML = `
-<div class="result-title">🏆 診断結果</div>
-<div style="font-size: 22px; font-weight: bold; color: #ffeb3b; text-align: center; margin: 10px 0;">【ヴィオラ（Viola）】</div>
-<div class="result-img-container">
-  <img src="${imageUrl}" alt="ヴィオラ" class="result-img">
-  <div class="img-caption">※制作者の愛器</div>
-</div>
-分析完了！ あなたの回答を総合的に検証した結果、あなたに最もふさわしい楽器は<b>【ヴィオラ】</b>であると判定されました！<br><br>
-<b>【診断の根拠】</b>
-<div class="reason-box">
-・${reason1}<br><br>
-・${reason2}<br><br>
-・${reason3}
-</div>
-あなたの内面にある音楽的資質や好みが、すべてヴィオラの特性と見事に合致しています！ さあ、今すぐアルト記号の楽譜を開きましょう！
-`;
+  // タイトルはグラデーション＆脈動スタイルで共通適用
+  const instrumentTitleHtml = `<div style="text-align: center; margin: 8px 0;"><span class="perfect-viola-title">【ヴィオラ（Viola）】</span></div>`;
+
+  // 締めの文章（完全一致時のみピンク色のスパン要素で囲む）
+  const closingText = isPerfectViola
+    ? `<span class="perfect-viola-text">驚異的です！ あなたの内面にある音楽的資質や美意識のすべてが、完全にヴィオラの領域と共鳴しています！！ さあ、迷わず今すぐアルト記号の楽譜を開きましょう！！！</span>`
+    : `あなたの内面にある音楽的資質や好みが、ヴィオラの特性と見事に合致しています！ さあ、今すぐアルト記号の楽譜を開きましょう！`;
+
+  textBox.innerHTML = `<div class="result-title">🏆 診断結果</div>` +
+instrumentTitleHtml +
+`<div class="result-img-container"><img src="${imageUrl}" alt="ヴィオラ" class="result-img"><div class="img-caption">※制作者の愛器</div></div>` +
+`分析完了！ あなたの回答を総合的に検証した結果、あなたに最もふさわしい楽器は<b>【ヴィオラ】</b>であると判定されました！<br>` +
+`<b>【診断の根拠】</b>` +
+`<div class="reason-box">${formatReason(reason1)}${formatReason(reason2)}${formatReason(reason3)}</div>` +
+closingText;
 
   optionsContainer.innerHTML = '<button id="retry-btn">▶ もう一度診断する</button>';
   document.getElementById('retry-btn').onclick = () => {
