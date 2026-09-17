@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>運命の弦楽器診断クエスト</title>
+<style>
+  body {
+    background-color: #000;
+    color: #fff;
+    font-family: 'Courier New', Courier, monospace, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+    padding: 20px;
+    box-sizing: border-box;
+  }
+  .window {
+    border: 4px solid #fff;
+    border-radius: 8px;
+    padding: 20px;
+    width: 100%;
+    max-width: 550px;
+    background-color: #000;
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
+  }
+  .text-box {
+    min-height: 90px;
+    margin-bottom: 20px;
+    line-height: 1.6;
+    font-size: 16px;
+    white-space: pre-wrap;
+  }
+  .options {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  button {
+    background: #000;
+    color: #fff;
+    border: 2px solid #fff;
+    padding: 12px;
+    font-size: 15px;
+    cursor: pointer;
+    text-align: left;
+    transition: 0.2s;
+  }
+  button:hover {
+    background: #fff;
+    color: #000;
+  }
+  .result-title {
+    font-size: 18px;
+    font-weight: bold;
+    color: #ffeb3b;
+    margin-bottom: 15px;
+  }
+  .reason-box {
+    background: #111;
+    border: 1px dashed #aaa;
+    padding: 12px;
+    margin: 10px 0;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+  /* 画像配置用のスタイリング */
+  .result-img-container {
+    text-align: center;
+    margin: 15px 0;
+  }
+  .result-img {
+    max-width: 100%;
+    height: auto;
+    max-height: 250px;
+    border: 2px solid #fff;
+    border-radius: 4px;
+    box-shadow: 0 0 8px rgba(255, 255, 255, 0.3);
+  }
+  .img-caption {
+    font-size: 11px;
+    color: #aaa;
+    margin-top: 6px;
+  }
+</style>
+</head>
+<body>
+
+<div class="window">
+  <div id="text-box" class="text-box">よくぞ まいられた！ 勇者よ！<br>これより 3つの 質問で おまえに もっとも ふさわしい 弦楽器を 診断してやろう！</div>
+  <div id="options" class="options">
+    <!-- ボタンが動的に入ります -->
+  </div>
+</div>
+
+<script>
+// Web Audio API を使った効果音の生成
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+function playBeepSound() {
+  if (audioCtx.state === 'suspended') {
+    audioCtx.resume();
+  }
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  
+  osc.type = 'square';
+  osc.frequency.setValueAtTime(1046.50, audioCtx.currentTime);
+  
+  gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.08);
+  
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+  
+  osc.start();
+  osc.stop(audioCtx.currentTime + 0.08);
+}
+
+// 質問データ
+const quizData = [
+  {
+    question: "【第1問】合奏で あなたが 心惹かれる アプローチは？",
+    answers: [
+      { text: "1. スポットライトを浴びて、物語の先頭を駆け抜ける", id: "q1_1" },
+      { text: "2. 大地のように深く静かに、土台となって空間を満たす", id: "q1_2" },
+      { text: "3. 表と裏を鮮やかにつなぎ、全体の響きに豊かな陰影をつくる", id: "q1_3" }
+    ]
+  },
+  {
+    question: "【第2問】あなたが 音楽を描くなら、どんな 風景が しっくりくる？",
+    answers: [
+      { text: "1. 青空を突き抜けるような、高く澄み渡った空間", id: "q2_1" },
+      { text: "2. 深海や大樹の根のように、じっくりと広がる重厚な世界", id: "q2_2" },
+      { text: "3. 夕暮れ時の温かみと哀愁を秘めた、居心地のよい絶妙な中間世界", id: "q2_3" }
+    ]
+  },
+  {
+    question: "【第3問】あなたが 音楽や 楽器に 求めるものは？",
+    answers: [
+      { text: "1. 圧倒的な華やかさと高音のスピード感", id: "q3_1" },
+      { text: "2. 豊かな響きと胸を打つ哀愁・情熱", id: "q3_2" },
+      { text: "3. 重厚で深い低音の振動と包容力", id: "q3_3" },
+      { text: "4. 派手さはなくても絶対に欠かせない渋い存在感", id: "q3_4" }
+    ]
+  }
+];
+
+// こじつけ理由
+const reasons = {
+  q1_1: "【アプローチ】物語の先頭を駆け抜けたいあなた：主旋律を歌い上げるのに最もふさわしい楽器こそがヴィオラです。人の声に最も近い温かく深い音色で主旋律を伸びやかに奏で、時に合奏全体を包み込みながら主役を張る表現力は、あなたの求める役割に完璧に合致しています。",
+  q1_2: "【アプローチ】土台となって空間を満たしたいあなた：ヴィオラの最低音（C線）が持つ深みのある響きこそ、アンサンブルの土台を根底から支える鍵となります。全体のバランスを察知するあなたの感性に最適です。",
+  q1_3: "【アプローチ】豊かな陰影をつくりたいあなた：ハーモニーの隙間を埋め、旋律と伴奏を結ぶ美学を理解しているあなたは、まさに天性のヴィオラ適性を持っています。",
+
+  q2_1: "【風景】高く澄み渡った空間を思い描くあなた：ヴィオラは高音域で見せる表情豊かな旋律美も持ち合わせています。澄み切った高音ソロも美しく歌い上げられる表現力は、あなたのセンスそのものです。",
+  q2_2: "【風景】重厚な世界を思い描くあなた：音の深みを鋭く捉えるセンスをお持ちです。ヴィオラ独特の渋く豊かな中低音域を的確に表現し、空間の広がりを作り出すことができます。",
+  q2_3: "【風景】温かみと哀愁のある中間世界を思い描くあなた：中心となる音響空間を直感的に捉えられる感性をお持ちです。ヴィオラ奏者としてこれ以上ない完璧なアプローチと言えます。",
+
+  q3_1: "【好み】華やかさを求めるあなた：華やかさを裏で支え、旋律に奥行きと立体感を与えるのがヴィオラの中音域です。真の美しさを演出するポジションが合っています。",
+  q3_2: "【好み】哀愁と情熱を求めるあなた：弦楽器の中で最も人声に近く、渋く深い哀愁を表現できるのがヴィオラです。あなたの求める豊かな情熱を余すことなく表現できます。",
+  q3_3: "【好み】重厚な低音を求めるあなた：ヴィオラ独特のくすんだ味わい深い低音は、他の楽器にはない唯一無二の深みを持っています。音の奥行きを追求するあなたにふさわしい選択です。",
+  q3_4: "【好み】渋い存在感を求めるあなた：「派手ではなくともアンサンブルに不可欠」というヴィオラ最大の魅力と、あなたの好みが完全に一致しています。"
+};
+
+let userChoices = [];
+let currentStep = 0;
+
+const textBox = document.getElementById('text-box');
+const optionsContainer = document.getElementById('options');
+
+function loadQuestion() {
+  const q = quizData[currentStep];
+  textBox.innerHTML = q.question;
+  optionsContainer.innerHTML = '';
+  
+  q.answers.forEach(ans => {
+    const btn = document.createElement('button');
+    btn.innerText = ans.text;
+    btn.onclick = () => {
+      playBeepSound();
+      handleAnswer(ans.id);
+    };
+    optionsContainer.appendChild(btn);
+  });
+}
+
+function handleAnswer(ansId) {
+  userChoices.push(ansId);
+  currentStep++;
+  
+  if (currentStep < quizData.length) {
+    loadQuestion();
+  } else {
+    showResult();
+  }
+}
+
+function showResult() {
+  const reason1 = reasons[userChoices[0]];
+  const reason2 = reasons[userChoices[1]];
+  const reason3 = reasons[userChoices[2]];
+
+  // ★ご自身の画像ファイル名を指定（index.htmlと同じフォルダに配置）
+  const imageUrl = "my_viola.jpg"; 
+
+  textBox.innerHTML = `
+<div class="result-title">🏆 診断結果：【ヴィオラ（Viola）】</div>
+<div class="result-img-container">
+  <img src="${imageUrl}" alt="ヴィオラ" class="result-img">
+  <div class="img-caption">※画像：制作者の愛器</div>
+</div>
+分析完了！ あなたの回答を総合的に検証した結果、あなたに最もふさわしい楽器は<b>【ヴィオラ】</b>であると判定されました！<br><br>
+<b>【診断の根拠】</b>
+<div class="reason-box">
+・${reason1}<br><br>
+・${reason2}<br><br>
+・${reason3}
+</div>
+あなたの内面にある音楽的資質や好みが、すべてヴィオラの特性と見事に合致しています！ さあ、今すぐアルト記号の楽譜を開きましょう！
+`;
+
+  optionsContainer.innerHTML = '<button id="retry-btn">▶ もう一度診断する</button>';
+  document.getElementById('retry-btn').onclick = () => {
+    playBeepSound();
+    location.reload();
+  };
+}
+
+function startQuiz() {
+  optionsContainer.innerHTML = '<button id="start-btn">▶ 診断を開始する</button>';
+  document.getElementById('start-btn').onclick = () => {
+    playBeepSound();
+    loadQuestion();
+  };
+}
+
+startQuiz();
+</script>
+
+</body>
+</html>
